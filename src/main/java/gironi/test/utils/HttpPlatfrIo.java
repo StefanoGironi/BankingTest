@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -29,8 +30,7 @@ public final class HttpPlatfrIo {
         GetMethod gm = new GetMethod(urlToRead);
 
         // Set the header for the request
-        gm.setRequestHeader(new Header("Content-Type", "application/json"));
-        gm.setRequestHeader(new Header("Auth-Schema", "S2S"));
+        setCommonHeader(gm);
 
         cli.executeMethod(gm);
 
@@ -52,8 +52,7 @@ public final class HttpPlatfrIo {
         PostMethod pm = new PostMethod(urlToRead);
 
         // Set the header for the request
-        pm.setRequestHeader(new Header("Content-Type", "application/json"));
-        pm.setRequestHeader(new Header("Auth-Schema", "S2S"));
+        setCommonHeader(pm);
 
         // Create the JSON object to send using bodyParamaters
         JsonObjectBuilder objB = Json.createObjectBuilder();
@@ -75,4 +74,8 @@ public final class HttpPlatfrIo {
         return jsonReader.readObject();
     }
 
+    private static void setCommonHeader(HttpMethodBase hmb) {
+        hmb.setRequestHeader(new Header("Content-Type", "application/json"));
+        hmb.setRequestHeader(new Header("Auth-Schema", "S2S"));
+    }
 }
