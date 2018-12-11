@@ -4,9 +4,13 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 
 /**
  * Give access to GET and POST HTTP request
@@ -20,16 +24,19 @@ public final class HttpPlatfrIo {
      * @throws Exception
      */
     public static JsonObject getHTML(String urlToRead) throws Exception {
-        URL url = new URL(urlToRead);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpClient cli = new HttpClient();
+
+        GetMethod gm = new GetMethod(urlToRead);
 
         // Set the header for the request
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("Auth-Schema", "S2S");
-        conn.setRequestMethod("GET");
+        gm.setRequestHeader(new Header("Content-Type", "application/json"));
+        gm.setRequestHeader(new Header("Auth-Schema", "S2S"));
+
+        cli.executeMethod(gm);
 
         // Now read the responce
-        JsonReader jsonReader = Json.createReader(conn.getInputStream());
+        JsonReader jsonReader = Json.createReader(gm.getResponseBodyAsStream());
+
         return jsonReader.readObject();
     }
 
@@ -40,28 +47,31 @@ public final class HttpPlatfrIo {
      * @throws Exception
      */
     public static JsonObject postHTML(String urlToRead, HashMap<String, String> bodyParamaters) throws Exception {
-        URL url = new URL(urlToRead);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpClient cli = new HttpClient();
+
+        PostMethod pm = new PostMethod(urlToRead);
 
         // Set the header for the request
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("Auth-Schema", "S2S");
+        pm.setRequestHeader(new Header("Content-Type", "application/json"));
+        pm.setRequestHeader(new Header("Auth-Schema", "S2S"));
 
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-
-        conn.setRequestMethod("POST");
-
+        // Create the JSON object to send using bodyParamaters
         JsonObjectBuilder objB = Json.createObjectBuilder();
         bodyParamaters.forEach( (k, v)->objB.add(k, v) );
 
         JsonObject obj = objB.build();
-        byte[] postDataBytes = obj.toString().getBytes("UTF-8");
-        conn.getOutputStream().write(postDataBytes);
+
+        // Now create the request Body
+        NameValuePair[] nvp = new NameValuePair[1];
+        nvp[0] = new NameValuePair(null, obj.toString());
+        pm.setRequestBody(nvp);
+
+        cli.executeMethod(pm);
+
+        // Read the responce
+        JsonReader jsonReader = Json.createReader(pm.getResponseBodyAsStream());
 
 
-        // Now read the responce
-        JsonReader jsonReader = Json.createReader(conn.getInputStream());
         return jsonReader.readObject();
     }
 
